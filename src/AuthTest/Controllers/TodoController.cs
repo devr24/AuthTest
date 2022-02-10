@@ -19,9 +19,15 @@ public class TodoController : ControllerBase
         _context = context;
     }
 
+    [Authorize]
+    [HttpGet("test")]
+    public IActionResult GetAuthTest()
+    {
+        return Ok("Hello world!");
+    }
+
     // GET: api/<TodoController>
     [HttpGet]
-    [Authorize]
     public async Task<IActionResult> Get()
     {
         return Ok(await _context.TodoItems.ToListAsync());
