@@ -48,6 +48,8 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AdminOnly", policy => policy.RequireClaim(ClaimTypes.Role, SeedData.AppRole.Admin.ToString()));
 });
 
+builder.Services.AddHealthChecks();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(swagger => {
@@ -99,6 +101,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapHealthChecks("/health");
 app.MapControllers();
 
 using (IServiceScope scope = app.Services.CreateScope())
