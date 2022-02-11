@@ -17,12 +17,14 @@ namespace AuthTest.Controllers
     {
         private readonly UserManager<ApplicationUser> userManager;
         private readonly SignInManager<ApplicationUser> signInManager;
+        RoleManager<IdentityRole> roleManager;
         private readonly IConfiguration configuration;
 
-        public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration)
+        public AccountController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration)
         {
             this.userManager = userManager;
             this.signInManager = signInManager;
+            this.roleManager = roleManager;
             this.configuration = configuration;
         }
 
@@ -44,22 +46,26 @@ namespace AuthTest.Controllers
                     return BadRequest(model);
                 }
 
-                var result = await signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, true);
+                var result = await signInManager.PasswordSignInAsync(model.Email, model.Password, false, true);
                 if (result.Succeeded)
                 {
-                    // var userRoles = await userManager.GetRolesAsync(user);
-                    // foreach (var userRole in userRoles)
-                    // {
-                    //     authClaims.Add(new Claim(ClaimTypes.Role, userRole));
-                    // }
-
                     var authClaims = new List<Claim>
                     {
                         new Claim(ClaimTypes.Name, user.UserName),
+                        // new Claim(ClaimTypes.Role, SeedData.AppRole.Admin.ToString()),
                         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                     };
 
-                    await userManager.AddClaimAsync(user, new Claim("UserRole", "Admin"));
+                    var userRoles = await userManager.GetRolesAsync(user);
+                    if (userRoles != null)
+                    {
+                        foreach (var userRole in userRoles)
+                        {
+                            authClaims.Add(new Claim(ClaimTypes.Role, userRole));
+                        }
+                    }
+                                        
+                    // await userManager.AddClaimAsync(user, new Claim("UserRole", "Admin"));
                     var token = GetToken(authClaims);
 
                     return Ok(new
@@ -101,6 +107,10 @@ namespace AuthTest.Controllers
                     PhoneNumberConfirmed = true,
                 };
                 var result = await userManager.CreateAsync(user, request.Password);
+
+                // Assign to Admin role - this is just an example of managing the role.
+                await userManager.AddToRoleAsync(user, SeedData.AppRole.Admin.ToString());
+
                 if (result.Succeeded)
                 {
                     return Ok();

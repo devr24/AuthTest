@@ -19,8 +19,22 @@ namespace AuthTest.Controllers
             _context = context;
         }
 
+        [Authorize(Policy = "AdminOnly")]
+        [HttpGet("auth/adminPolicyTest")]
+        public IActionResult GetAdminOnly()
+        {
+            return Ok("Hello world!");
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet("auth/adminRoleTest")]
+        public IActionResult GetAdminRole()
+        {
+            return Ok("Hello world!");
+        }
+
         [Authorize]
-        [HttpGet("test")]
+        [HttpGet("auth/test")]
         public IActionResult GetAuthTest()
         {
             return Ok("Hello world!");
